@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sum of Subsets using Backtracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#111; --mute:#666; --line:#e4e4e4; --cut:#d64545; --win:#ffd23f; --soft:#f4f4f2;
+  --serif:'Crimson Pro',Georgia,'Times New Roman',serif;
+  --sans:'Inter','Segoe UI',Arial,sans-serif;
+  --mono:'JetBrains Mono',Consolas,monospace;
+  --foot:clamp(150px,26vh,260px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#fff;color:var(--ink);font-family:var(--serif);overflow:hidden}
+body.fs{--foot:0px}
+body.fs .foot{display:none}
+ 
+/* ---------- stage ---------- */
+.stage{position:fixed;left:0;right:0;top:0;height:calc(100vh - var(--foot));background:#fff;border-bottom:2px solid #e9e9e9}
+body.fs .stage{border:0}
+.slide{position:absolute;inset:0;padding:3vh 10vw;display:flex;flex-direction:column;justify-content:center;
+  max-width:1280px;margin:0 auto;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
+.slide.active{opacity:1;visibility:visible}
+h1{font-weight:500;font-size:clamp(2.2rem,min(5.4vw,9vh),4.6rem);line-height:1.12;letter-spacing:-.005em}
+h2{font-weight:500;font-size:clamp(1.6rem,min(3.4vw,6vh),2.9rem);line-height:1.12;margin-bottom:2.4vh}
+h3{font-weight:600;font-size:clamp(1.1rem,min(1.8vw,3vh),1.5rem);margin-bottom:.5vh}
+p,li{font-size:clamp(1rem,min(1.6vw,2.7vh),1.4rem);line-height:1.45;color:#2a2a2a}
+.lead{font-size:clamp(1.15rem,min(2vw,3.4vh),1.8rem);line-height:1.4;max-width:34em;color:var(--ink)}
+.sub{color:var(--mute);margin-top:1.8vh}
+b{font-weight:600;color:#000}
+.cut{color:var(--cut)} .win{background:linear-gradient(transparent 60%,var(--win) 60%)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3.5vw;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2vw}
+.card{border:1.5px solid var(--ink);border-radius:10px;padding:1.6vh 1.4vw;background:#fff}
+.card.c{border-color:var(--cut)} .card.w{background:#fffbea;border-color:#d4a800}
+.chips{display:flex;gap:1vw;margin:2.4vh 0;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:clamp(1.2rem,min(2.4vw,4vh),2rem);border:2px solid var(--ink);width:clamp(3rem,min(6vw,10vh),5rem);
+  aspect-ratio:1;display:grid;place-items:center;border-radius:8px;box-shadow:3px 3px 0 var(--ink)}
+.chip.t{width:auto;padding:0 1.4vw;aspect-ratio:auto;background:var(--win)}
+code{font-family:var(--mono);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:4px}
+.eq{font-family:var(--mono);font-size:clamp(.9rem,min(1.5vw,2.6vh),1.3rem);background:var(--soft);border-radius:8px;padding:1.2vh 1.2vw;display:inline-block;margin:1vh 0}
+ol{margin-left:1.2em} li{margin-bottom:1.1vh}
+pre{font-family:var(--mono);font-size:clamp(.62rem,min(1.15vw,2.1vh),.98rem);line-height:1.55;background:var(--soft);
+  border:1px solid var(--line);border-radius:10px;padding:1.6vh 1.6vw;overflow:auto;color:#222}
+pre .k{color:#1d4ed8} pre .c{color:#888}
+pre .p{background:#fde8e8;display:block;margin:0 -1.6vw;padding:0 1.6vw;border-left:3px solid var(--cut)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:.9vh .7vw;border-bottom:1px solid var(--line);font-size:clamp(.78rem,min(1.3vw,2.3vh),1.1rem);vertical-align:top}
+th{color:var(--mute);font-weight:500}
+td.m{font-family:var(--mono);font-size:.92em}
+.badge{display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;background:var(--cut);color:#fff;font:600 .8em var(--sans)}
+.stat{font-size:clamp(2.4rem,min(5.2vw,9vh),4.4rem);line-height:1;font-weight:500}
+.legend{display:flex;gap:1.6vw;flex-wrap:wrap;margin-top:1vh;font:clamp(.7rem,min(1vw,1.9vh),.9rem) var(--sans);color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:.45em}
+.dot{width:.9em;height:.9em;border-radius:50%;border:2px solid}
+.tree{width:100%;height:auto;max-height:calc(100vh - var(--foot) - 24vh);display:block}
+.tree text{font-family:var(--mono);fill:var(--ink);font-size:12.5px;text-anchor:middle;dominant-baseline:central}
+.tree .e{stroke:#111;stroke-width:2;fill:none;stroke-linecap:round}
+.tree .x{stroke:#999;stroke-width:2;stroke-dasharray:6 5;fill:none;stroke-linecap:round}
+.tree .n{fill:#fff;stroke-width:2.2}
+.tree .lvl{fill:var(--mute);font:11px var(--sans);text-anchor:start}
+ 
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:1vh .9vw}
+.sg div{border:1px solid var(--line);border-radius:8px;padding:.7vh .8vw;font-family:var(--mono);font-size:clamp(.72rem,min(1.2vw,2.2vh),1rem);display:flex;justify-content:space-between;gap:.5em}
+.sg .over b{color:var(--cut)} .sg .hit{background:var(--win);border-color:#d4a800}
+.bignode{width:clamp(80px,14vh,140px);aspect-ratio:1;border:3px solid #111;border-radius:50%;display:grid;place-items:center;font:500 clamp(1.1rem,3vh,2rem) var(--mono);margin-bottom:1.4vh}
+.qa p{margin-top:.4vh}
+/* title slide */
+.title{align-items:flex-start}
+.title h1{max-width:13em}
+.tshow{display:flex;align-items:center;gap:2vw;margin-top:2vh}
+.art{width:clamp(220px,min(34vw,46vh),420px);flex:none;background:radial-gradient(closest-side,#f3f3f3 70%,transparent);padding:1vh}
+.art .tree{max-height:none}
+.handles{align-self:flex-end;margin-bottom:3vh}
+.handles div{display:flex;align-items:center;gap:.7em;font-size:clamp(1rem,min(1.7vw,3vh),1.5rem);margin:1.2vh 0}
+.handles svg{width:1.1em;height:1.1em;flex:none}
+ 
+/* stage chrome */
+.nav{position:absolute;right:1.2vw;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;z-index:4;color:#000;padding:1vh .4vw}
+.nav svg{width:clamp(28px,3.4vw,50px);height:auto;display:block}
+.nav small{display:block;font:500 .75rem var(--sans);color:#555;text-align:right;margin-top:-.4vh}
+.nav.prev{right:auto;left:1.2vw;display:none}
+.nav:focus-visible,.heart:focus-visible,.ib:focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+.heart{position:absolute;left:1.6vw;bottom:2.4vh;width:52px;height:52px;border-radius:50%;background:#9a9a9a;border:0;cursor:pointer;display:grid;place-items:center;z-index:4}
+.heart svg{width:26px;height:26px;fill:#ffb3b3}
+.heart.on svg{fill:#ff5d5d}
+.heart i{position:absolute;right:-8px;bottom:-4px;background:#555;color:#fff;font:600 .72rem var(--sans);padding:1px 7px;border-radius:10px;font-style:normal}
+.prog{position:absolute;left:0;bottom:0;height:3px;background:#111;width:0;transition:width .3s;z-index:3}
+ 
+/* footer card */
+.foot{position:fixed;left:0;right:0;bottom:0;height:var(--foot);padding:0 3.4vw;font-family:var(--sans)}
+.card2{height:100%;background:#fafafa;border-radius:26px 26px 0 0;box-shadow:0 -6px 22px rgba(0,0,0,.07);padding:2vh 3vw;display:flex;flex-direction:column}
+.fbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.6vh;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:.8vw;font-weight:500;font-size:clamp(.85rem,1.2vw,1.1rem)}
+.logo{width:38px;height:38px;border-radius:8px;background:#fff3cf;border:1px solid #f1d888;display:grid;place-items:center}
+.pill{width:38px;height:38px;border-radius:8px;background:#ececec}
+.ib{background:none;border:0;cursor:pointer;color:#111;padding:6px}
+.ib svg{width:22px;height:22px;display:block}
+.finfo{flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:2vw;align-items:center;min-height:0}
+.finfo .t{font-weight:500;font-size:clamp(.95rem,1.45vw,1.3rem)}
+.finfo .m{display:flex;gap:1.6vw;margin-top:1.6vh;color:#444;font-size:clamp(.78rem,1.05vw,.95rem)}
+.finfo .m span{display:inline-flex;align-items:center;gap:.4em}
+.finfo .m svg{width:1.15em;height:1.15em}
+.auth{display:flex;align-items:center;gap:1.4vw;font-weight:500;font-size:clamp(.95rem,1.45vw,1.3rem)}
+.av{width:clamp(44px,6.4vh,78px);aspect-ratio:1;border-radius:8px;background:#93b4fb;display:grid;place-items:center;flex:none}
+.av svg{width:60%;fill:#2f66e0}
+ 
+@media (max-width:820px){
+  .slide{padding:3vh 7vw;overflow-y:auto;justify-content:flex-start}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .tshow{flex-direction:column;align-items:flex-start}
+  .nav{right:0} .finfo{grid-template-columns:1fr} .auth{display:none} .pill{display:none}
+}
+@media (prefers-reduced-motion:reduce){.slide,.prog{transition:none}}
+</style>
+</head>
+<body>
+ 
+<div class="stage" id="stage">
+<main id="deck">
+ 
+<!-- 1 Title -->
+<section class="slide title active">
+  <h1>Sum of Subsets using Backtracking</h1>
+  <div class="tshow">
+    <div class="art"><svg class="tree" data-tree="plain" aria-hidden="true"></svg></div>
+    <div class="handles">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8"><path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-6"/></svg>Design and Analysis of Algorithms</div>
+      <div><svg viewBox="0 0 24 24" fill="#111"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>David and Dhurgananth S</div>
+    </div>
+  </div>
+</section>
+ 
+<!-- 2 Problem -->
+<section class="slide">
+  <h2>The problem</h2>
+  <div class="grid2">
+    <div>
+      <p class="lead">Given n positive numbers and a target M, find every subset whose elements add up to exactly M.</p>
+      <p class="sub">Input: weights <code>w₁ … wₙ</code> and a target <code>M</code>.<br>Output: all subsets with sum = M.</p>
+    </div>
+    <div class="card">
+      <h3>Why it matters</h3>
+      <p>It is a classic NP-complete decision problem. Brute force checks all 2ⁿ subsets, so we need a way to skip the hopeless ones.</p>
+      <p style="margin-top:1.2vh">Uses: budget fitting, packing, knapsack-style cryptography, resource allocation.</p>
+    </div>
+  </div>
+</section>
+ 
+<!-- Real-time cases -->
+<section class="slide">
+  <h2>Where do we see this in real life?</h2>
+  <div class="grid3">
+    <div class="card"><h3>Shopping voucher</h3><p>A ₹1500 gift voucher must be used exactly. Items cost ₹300, ₹500, ₹600 and ₹700. Which items add up to ₹1500 with nothing wasted?</p></div>
+    <div class="card"><h3>Cloud server memory</h3><p>A server has exactly 15 GB free. Jobs need 3, 5, 6 and 7 GB. Which jobs fill the memory with no gap?</p></div>
+    <div class="card"><h3>Delivery truck</h3><p>A truck must leave with a 15-tonne load. Parcels weigh 3, 5, 6 and 7 tonnes. Which parcels make a full load?</p></div>
+  </div>
+  <p class="sub">All three are the same problem: pick items so the total hits one exact number. In this talk we use the numbers 3, 5, 6, 7 and the target 15.</p>
+</section>
+ 
+<!-- 3 Example -->
+<section class="slide">
+  <h2>Worked example</h2>
+  <p class="lead">Find all subsets of the set below that add up to 15.</p>
+  <p class="sub" style="margin-top:.8vh">Read them as items of ₹300, ₹500, ₹600, ₹700 and a ₹1500 voucher, or as 3, 5, 6, 7 GB jobs and 15 GB of memory.</p>
+  <div class="chips"><div class="chip">3</div><div class="chip">5</div><div class="chip">6</div><div class="chip">7</div><div class="chip t">M = 15</div></div>
+  <div class="grid2">
+    <div class="card"><h3>Preparation</h3><p>Sort the weights in ascending order. The total is 21, so at the start the remaining sum is r = 21.</p></div>
+    <div class="card w"><h3>Expected answer</h3><p>Only one subset works: <b class="win">{3, 5, 7}</b>. Every other combination is too small or too large.</p></div>
+  </div>
+</section>
+ 
+<!-- Brute force -->
+<section class="slide">
+  <h2>First idea: check every subset</h2>
+  <div class="sg"><div class=""><span>{}</span><b>0</b></div><div class=""><span>{3}</span><b>3</b></div><div class=""><span>{5}</span><b>5</b></div><div class=""><span>{6}</span><b>6</b></div><div class=""><span>{7}</span><b>7</b></div><div class=""><span>{3, 5}</span><b>8</b></div><div class=""><span>{3, 6}</span><b>9</b></div><div class=""><span>{3, 7}</span><b>10</b></div><div class=""><span>{5, 6}</span><b>11</b></div><div class=""><span>{5, 7}</span><b>12</b></div><div class=""><span>{6, 7}</span><b>13</b></div><div class=""><span>{3, 5, 6}</span><b>14</b></div><div class="hit"><span>{3, 5, 7}</span><b>15</b></div><div class="over"><span>{3, 6, 7}</span><b>16</b></div><div class="over"><span>{5, 6, 7}</span><b>18</b></div><div class="over"><span>{3, 5, 6, 7}</span><b>21</b></div></div>
+  <p class="sub">With 4 numbers there are 2⁴ = 16 subsets. Brute force computes all 16 sums and finds one match (yellow). Red sums are already above 15. With 40 numbers there would be over a trillion subsets, which is why we need pruning.</p>
+</section>
+ 
+<!-- 4 Approach -->
+<section class="slide">
+  <h2>Backtracking approach</h2>
+  <div class="grid2">
+    <div>
+      <p class="lead">At each level we decide about one item: put it in the subset, or leave it out.</p>
+      <p class="sub">Each node of the tree stores a state:</p>
+      <div class="eq">s = sum chosen so far<br>r = sum of items not yet decided<br>k = index of the next item</div>
+    </div>
+    <ol>
+      <li><b>Include</b> item k: go to the left child with s + wₖ.</li>
+      <li><b>Exclude</b> item k: go to the right child with s unchanged.</li>
+      <li>If s = M, record the subset as a solution.</li>
+      <li>If a branch fails a pruning test, <b class="cut">backtrack</b> without exploring it.</li>
+    </ol>
+  </div>
+</section>
+ 
+<!-- Reading a node -->
+<section class="slide">
+  <h2>How to read one node of the tree</h2>
+  <div class="grid2">
+    <div>
+      <div class="bignode">8/13</div>
+      <p class="lead">The label is s / r.</p>
+      <p class="sub">s = 8: we have already chosen 3 and 5.<br>r = 13: the numbers 6 and 7 are still undecided.<br>Check: 8 + 13 = 21 ≥ 15, so this path is still alive.</p>
+    </div>
+    <ol>
+      <li>Each level of the tree is one number: 3, then 5, then 6, then 7.</li>
+      <li>A <b>solid</b> line means we include that number.</li>
+      <li>A <b>dashed</b> line means we leave it out.</li>
+      <li>A <b class="cut">red</b> node is cut off by a pruning rule.</li>
+      <li>A <b>grey</b> node used all numbers but the sum is not 15.</li>
+      <li>The <b class="win">yellow</b> node is a solution.</li>
+    </ol>
+  </div>
+</section>
+ 
+<!-- 5 Pruning rules -->
+<section class="slide">
+  <h2>Two pruning rules</h2>
+  <div class="grid2">
+    <div class="card c">
+      <h3>Too heavy</h3>
+      <div class="eq">s + wₖ &gt; M</div>
+      <p>Adding the next item overshoots the target. Weights are positive, so no later choice can bring the sum back down. Skip the include branch.</p>
+      <p class="sub"><b>Real life:</b> your basket is already ₹1400 and the next item is ₹700. That makes ₹2100, over the ₹1500 voucher, so you put it back.</p>
+    </div>
+    <div class="card c">
+      <h3>Not enough left</h3>
+      <div class="eq">s + r &lt; M</div>
+      <p>Even if every remaining item is taken, the total still falls short of M. Skip the whole subtree.</p>
+      <p class="sub"><b>Real life:</b> you hold ₹300 of items and only ₹700 of items remain. Even buying them all gives ₹1000, never ₹1500, so you stop.</p>
+    </div>
+  </div>
+  <p class="sub">Both tests cost O(1) per node.</p>
+</section>
+ 
+<!-- 6 Tree -->
+<section class="slide">
+  <h2>State-space tree for {3, 5, 6, 7}, M = 15</h2>
+  <svg class="tree" data-tree="full" role="img" aria-label="State-space tree with pruned nodes marked"></svg>
+  <div class="legend">
+    <span><i class="dot" style="border-color:#111"></i>Explored</span>
+    <span><i class="dot" style="border-color:var(--cut)"></i>Pruned (numbered)</span>
+    <span><i class="dot" style="border-color:#999"></i>Dead end, sum ≠ M</span>
+    <span><i class="dot" style="border-color:#111;background:var(--win)"></i>Solution</span>
+    <span>Solid edge = include, dashed = exclude. Label = s / r</span>
+  </div>
+</section>
+ 
+<!-- 7 Pruning table -->
+<section class="slide">
+  <h2>Where pruning occurs</h2>
+  <table>
+    <tr><th></th><th>Node (s / r)</th><th>Path</th><th>Test that fired</th><th>Effect</th></tr>
+    <tr><td><span class="badge">1</span></td><td class="m">0 / 13</td><td>3 out, 5 out</td><td class="m">0 + 13 &lt; 15</td><td>6 nodes never built</td></tr>
+    <tr><td><span class="badge">2</span></td><td class="m">3 / 7</td><td>3 in, 5 out, 6 out</td><td class="m">3 + 7 &lt; 15</td><td>2 nodes skipped</td></tr>
+    <tr><td><span class="badge">3</span></td><td class="m">5 / 7</td><td>3 out, 5 in, 6 out</td><td class="m">5 + 7 &lt; 15</td><td>2 nodes skipped</td></tr>
+    <tr><td><span class="badge">4</span></td><td class="m">21 / 0</td><td>3, 5, 6 in, then 7</td><td class="m">14 + 7 &gt; 15</td><td>Include branch cut</td></tr>
+    <tr><td><span class="badge">5</span></td><td class="m">16 / 0</td><td>3, 6 in, then 7</td><td class="m">9 + 7 &gt; 15</td><td>Include branch cut</td></tr>
+    <tr><td><span class="badge">6</span></td><td class="m">18 / 0</td><td>5, 6 in, then 7</td><td class="m">11 + 7 &gt; 15</td><td>Include branch cut</td></tr>
+  </table>
+  <p class="sub">Cuts 1 to 3 come from the bound s + r &lt; M. Cuts 4 to 6 come from the weight test.</p>
+</section>
+ 
+<!-- 8 Trace -->
+<section class="slide">
+  <h2>Tracing the solution path</h2>
+  <div class="grid2">
+    <ol>
+      <li>Start at the root: s = 0, r = 21.</li>
+      <li>Include 3: s = 3, r = 18. Bound holds.</li>
+      <li>Include 5: s = 8, r = 13. Bound holds.</li>
+      <li>Exclude 6: s = 8, r = 7. Bound holds (8 + 7 = 15).</li>
+      <li>Include 7: s = <b class="win">15 = M</b>. Record {3, 5, 7}.</li>
+      <li>Backtrack and finish the other branches. None reaches 15.</li>
+    </ol>
+    <div class="card w">
+      <h3>Result</h3>
+      <p class="lead" style="font-size:clamp(1.6rem,min(3vw,5vh),2.6rem)">3 + 5 + 7 = 15</p>
+      <p class="sub">The only subset with the required sum. The tree confirms it by exhausting every other branch.</p>
+    </div>
+  </div>
+</section>
+ 
+<!-- 9 Code -->
+<section class="slide">
+  <h2>Algorithm</h2>
+<pre><span class="k">def</span> sum_of_subsets(w, M):
+    w.sort(); n = len(w); out = []
+ 
+    <span class="k">def</span> bt(k, s, r, chosen):
+        <span class="k">if</span> s == M:                       <span class="c"># solution found</span>
+            out.append(chosen[:]); <span class="k">return</span>
+        <span class="k">if</span> k == n: <span class="k">return</span>
+<span class="p">        if s + w[k] <= M:               # rule 1: not too heavy</span>            chosen.append(w[k])
+            bt(k+1, s + w[k], r - w[k], chosen)
+            chosen.pop()                  <span class="c"># backtrack</span>
+<span class="p">        if s + r - w[k] >= M:           # rule 2: still reachable</span>            bt(k+1, s, r - w[k], chosen)
+ 
+    bt(0, 0, sum(w), [])
+    <span class="k">return</span> out
+ 
+print(sum_of_subsets([3, 5, 6, 7], 15))   <span class="c"># [[3, 5, 7]]</span></pre>
+</section>
+ 
+<!-- 10 Complexity -->
+<section class="slide">
+  <h2>Complexity and savings</h2>
+  <div class="grid3">
+    <div class="card"><div class="stat">31</div><p>nodes in the full tree for n = 4</p></div>
+    <div class="card"><div class="stat">21</div><p>nodes generated with pruning</p></div>
+    <div class="card c"><div class="stat cut">10</div><p>nodes never visited, about one third</p></div>
+  </div>
+  <div class="grid2" style="margin-top:3vh">
+    <div><h3>Worst case</h3><p>Still O(2ⁿ). Pruning does not change the bound but cuts the work in practice.</p></div>
+    <div><h3>Space</h3><p>O(n) for the recursion stack and the current subset.</p></div>
+  </div>
+</section>
+ 
+<!-- Voucher recap -->
+<section class="slide">
+  <h2>Back to the real-life case</h2>
+  <div class="grid2">
+    <div class="card w"><h3>Answer for the voucher</h3><p>Buy the ₹300, ₹500 and ₹700 items. The total is exactly ₹1500 and the ₹600 item stays on the shelf.</p>
+      <p class="sub">Same answer for the server: run the 3, 5 and 7 GB jobs to fill 15 GB.</p></div>
+    <div>
+      <h3>What the algorithm saved</h3>
+      <p>It never explored baskets that already went over ₹1500, and it dropped baskets that could not reach ₹1500 even with every remaining item. In our small example that was 10 of 31 tree nodes. In a shop with 40 items the savings are far larger.</p>
+      <p class="sub">Where else: bill splitting, packing a container, filling a time slot with tasks.</p>
+    </div>
+  </div>
+</section>
+ 
+<!-- Q&A -->
+<section class="slide qa">
+  <h2>Questions you may be asked</h2>
+  <div class="grid2">
+    <div class="card"><h3>Backtracking vs brute force?</h3><p>Brute force tries everything. Backtracking drops a path as soon as it cannot work.</p></div>
+    <div class="card"><h3>Is it always faster?</h3><p>Usually, but the worst case is still O(2ⁿ).</p></div>
+    <div class="card"><h3>Why sort the numbers?</h3><p>So the "too heavy" rule is safe: later numbers are never smaller.</p></div>
+    <div class="card"><h3>Why keep r?</h3><p>It lets us test "enough left?" in one step without re-adding numbers.</p></div>
+  </div>
+</section>
+ 
+<!-- 11 Takeaways -->
+<section class="slide">
+  <h2>Key takeaways</h2>
+  <div class="grid3">
+    <div class="card"><h3>Model</h3><p>A binary state-space tree: include or exclude each item.</p></div>
+    <div class="card c"><h3>Prune</h3><p>Cut a branch when s + wₖ &gt; M or s + r &lt; M.</p></div>
+    <div class="card w"><h3>Result</h3><p>Same answer as brute force, with fewer nodes explored.</p></div>
+  </div>
+  <p class="lead" style="margin-top:4vh">Thank you. Questions?</p>
+</section>
+ 
+</main>
+ 
+<button class="nav prev" id="prev" aria-label="Previous slide"><svg viewBox="0 0 30 50" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4 6 25l18 21"/></svg></button>
+<button class="nav" id="next" aria-label="Next slide"><svg viewBox="0 0 30 50" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l18 21L6 46"/></svg><small id="num">1</small></button>
+<button class="heart" id="heart" aria-label="Like this presentation"><svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.800-8 11-8 11z"/></svg><i id="likes">121</i></button>
+<div class="prog" id="prog"></div>
+</div>
+ 
+<footer class="foot">
+  <div class="card2">
+    <div class="fbar">
+      <div class="brand">
+        <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><path d="M12 7 6 17M12 7l6 10"/></svg></div>
+        <span>Made with HTML</span><div class="pill"></div><div class="pill"></div>
+      </div>
+      <div>
+        <button class="ib" id="fs" aria-label="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+        <button class="ib" id="share" aria-label="Copy link"><svg viewBox="0 0 24 24" fill="#111" stroke="#111" stroke-width="2"><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M8 11l8-5M8 13l8 5" fill="none"/></svg></button>
+      </div>
+    </div>
+    <div class="finfo">
+      <div>
+        <div class="t">Sum of Subsets using Backtracking</div>
+        <div class="m">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</span>
+          <span><svg viewBox="0 0 24 24" fill="#333"><path d="M12 21s-8-5.200-8-11a4.500 4.500 0 0 1 8-2.800A4.500 4.500 0 0 1 20 10c0 5.800-8 11-8 11z"/></svg><span id="likes2">121</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="cnt"></span>&nbsp;slides</span>
+        </div>
+      </div>
+      <div class="auth"><div class="av"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.500"/><path d="M3.500 22c0-5 3.800-8 8.500-8s8.500 3 8.500 8z"/></svg></div>David and Dhurgananth S</div>
+    </div>
+  </div>
+</footer>
+ 
+<script>
+/* ---------- State-space tree (label = s/r) ---------- */
+const N = [
+ ['A',0,21,545,45,null,'ok'],
+ ['B',3,18,302,130,'A','ok'],['C',0,18,790,130,'A','ok'],
+ ['D',8,13,165,220,'B','ok'],['E',3,13,440,220,'B','ok'],['F',5,13,700,220,'C','ok'],['G',0,13,880,220,'C','cut',1],
+ ['H',14,7,95,310,'D','ok'],['I',8,7,235,310,'D','ok'],['J',9,7,375,310,'E','ok'],['K',3,7,510,310,'E','cut',2],
+ ['L',11,7,640,310,'F','ok'],['M',5,7,760,310,'F','cut',3],
+ ['H1',21,0,60,400,'H','cut',4],['H2',14,0,130,400,'H','dead'],
+ ['I1',15,0,200,400,'I','sol'],['I2',8,0,270,400,'I','dead'],
+ ['J1',16,0,340,400,'J','cut',5],['J2',9,0,410,400,'J','dead'],
+ ['L1',18,0,610,400,'L','cut',6],['L2',11,0,680,400,'L','dead']
+];
+const COL = {ok:'#111',cut:'#d64545',dead:'#9a9a9a',sol:'#111'};
+function drawTree(svg, markers){
+  const map = {}, kids = {};
+  N.forEach(n => map[n[0]] = n);
+  N.forEach(n => { if(n[5]) (kids[n[5]] = kids[n[5]] || []).push(n[0]); });
+  let s = '';
+  N.forEach(n => {
+    if(!n[5]) return;
+    const p = map[n[5]], left = kids[n[5]][0] === n[0];
+    s += `<line class="${left?'e':'x'}" x1="${p[3]}" y1="${p[4]+24}" x2="${n[3]}" y2="${n[4]-24}"/>`;
+  });
+  N.forEach(n => {
+    const c = COL[n[6]], sol = n[6] === 'sol';
+    s += `<circle class="n" cx="${n[3]}" cy="${n[4]}" r="24" stroke="${c}" ${sol?'style="fill:#ffd23f"':''}/>`;
+    s += `<text x="${n[3]}" y="${n[4]}" style="fill:${n[6]==='cut'?'#d64545':n[6]==='dead'?'#777':'#111'}">${n[1]}/${n[2]}</text>`;
+    if(markers && n[7]) s += `<circle cx="${n[3]+19}" cy="${n[4]-19}" r="9" fill="#d64545"/><text x="${n[3]+19}" y="${n[4]-19}" style="fill:#fff;font-size:11px;font-weight:600">${n[7]}</text>`;
+  });
+  if(markers) ['Item 3','Item 5','Item 6','Item 7'].forEach((t,i) => s += `<text class="lvl" x="2" y="${88+i*90}">${t}</text>`);
+  svg.setAttribute('viewBox','0 0 960 440');
+  svg.innerHTML = s;
+}
+document.querySelectorAll('svg[data-tree]').forEach(el => drawTree(el, el.dataset.tree === 'full'));
+ 
+/* ---------- Deck navigation ---------- */
+const slides = [...document.querySelectorAll('.slide')];
+const $ = id => document.getElementById(id);
+$('cnt').textContent = slides.length;
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  $('prog').style.width = ((cur + 1) / slides.length * 100) + '%';
+  $('num').textContent = cur + 1;
+  $('prev').style.display = cur ? 'block' : 'none';
+  $('next').style.visibility = cur === slides.length - 1 ? 'hidden' : 'visible';
+  history.replaceState(null, '', '#' + (cur + 1));
+}
+$('next').onclick = () => show(cur + 1);
+$('prev').onclick = () => show(cur - 1);
+function toggleFs(){
+  document.body.classList.toggle('fs');
+  if(document.body.classList.contains('fs')) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{});
+  else if(document.fullscreenElement) document.exitFullscreen();
+}
+$('fs').onclick = toggleFs;
+document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) document.body.classList.remove('fs'); });
+$('share').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(location.href).catch(()=>{}); };
+let likes = 121, liked = false;
+$('heart').onclick = () => {
+  liked = !liked; likes += liked ? 1 : -1;
+  $('heart').classList.toggle('on', liked);
+  $('likes').textContent = $('likes2').textContent = likes;
+};
+addEventListener('keydown', e => {
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){ e.preventDefault(); show(cur + 1); }
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){ e.preventDefault(); show(cur - 1); }
+  else if(e.key === 'Home') show(0);
+  else if(e.key === 'End') show(slides.length - 1);
+  else if(e.key.toLowerCase() === 'f') toggleFs();
+  else if(e.key === 'Escape') document.body.classList.remove('fs');
+});
+let tx = null;
+addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+addEventListener('touchend', e => {
+  if(tx === null) return;
+  const d = e.changedTouches[0].clientX - tx;
+  if(Math.abs(d) > 50) show(cur + (d < 0 ? 1 : -1));
+  tx = null;
+});
+show((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
+ 
